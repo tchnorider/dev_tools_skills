@@ -1,0 +1,64 @@
+# Template for the create-docker-container skill. Replace every placeholder.
+# Ports, env_file, and the volume block are omitted unless the interview asked for them.
+# Do not leave a placeholder in the written file.
+
+name: __SERVICE_NAME__
+
+services:
+  __SERVICE_NAME__:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: __SERVICE_NAME__:local
+    container_name: __CONTAINER_NAME__
+    init: true
+    read_only: true
+    user: "__RUN_USER__"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    pids_limit: 256
+    mem_limit: 512m
+    cpus: "1.0"
+    ulimits:
+      nofile:
+        soft: 1024
+        hard: 1024
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,nodev,size=64m
+    # Uncomment only for a published port. Keep both ports >= 1024.
+    # ports:
+    #   - "127.0.0.1:__HOST_PORT__:__CONTAINER_PORT__"
+    # Uncomment only when the user named configuration keys.
+    # env_file:
+    #   - .env
+    # Uncomment only for persistent data. Prefer a named volume.
+    # volumes:
+    #   - type: volume
+    #     source: __VOLUME_NAME__
+    #     target: __VOLUME_TARGET__
+    #     read_only: true
+    networks:
+      - __SERVICE_NAME__
+    restart: "on-failure:5"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      test: ["CMD", "__HEALTHCHECK_BIN__", "__HEALTHCHECK_ARG__"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+networks:
+  __SERVICE_NAME__:
+    driver: bridge
+    # Set internal: true only when the user refused outbound access.
+    # internal: true
+
+# volumes:
+#   __VOLUME_NAME__:

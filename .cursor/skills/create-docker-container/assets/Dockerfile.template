@@ -1,0 +1,28 @@
+# syntax=docker/dockerfile:1
+
+# Template for the create-docker-container skill. Replace every placeholder.
+# Delete stages you do not need. Do not leave a placeholder in the written file.
+# Human tag: __IMAGE_TAG__
+# Resolved on: __RESOLVED_ON__
+
+FROM __IMAGE_REPOSITORY__@sha256:__IMAGE_DIGEST__ AS runtime
+
+# Create a non-root user only when the base image does not already have one.
+# Debian/Ubuntu:
+#   RUN groupadd --system --gid 65532 app \
+#     && useradd --system --uid 65532 --gid 65532 --no-create-home --shell /usr/sbin/nologin app
+# Alpine:
+#   RUN addgroup -g 65532 -S app && adduser -u 65532 -S -G app -H -h /nonexistent app
+# Then: USER 65532:65532
+USER __RUN_USER__
+
+# COPY --chown=__RUN_USER__ app /app
+WORKDIR /app
+
+# Observe the real process. Do not use exit 0, and do not install curl for this.
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 CMD ["__HEALTHCHECK_BIN__", "__HEALTHCHECK_ARG__"]
+
+EXPOSE __CONTAINER_PORT__
+
+ENTRYPOINT ["__ENTRYPOINT__"]
+CMD ["__CMD__"]

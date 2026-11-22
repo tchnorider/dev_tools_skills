@@ -1,0 +1,55 @@
+[
+  {
+    "Config": {
+      "User": "65532:65532",
+      "Healthcheck": {
+        "Test": ["CMD", "/app/healthcheck"]
+      }
+    },
+    "HostConfig": {
+      "Privileged": false,
+      "ReadonlyRootfs": true,
+      "CapDrop": ["ALL"],
+      "CapAdd": null,
+      "SecurityOpt": ["no-new-privileges:true"],
+      "NetworkMode": "sample_sample",
+      "PidMode": "",
+      "IpcMode": "private",
+      "UTSMode": "",
+      "UsernsMode": "",
+      "Memory": 536870912,
+      "NanoCpus": 1000000000,
+      "CpuQuota": 0,
+      "PidsLimit": 256,
+      "Init": true,
+      "RestartPolicy": {
+        "Name": "on-failure",
+        "MaximumRetryCount": 5
+      },
+      "LogConfig": {
+        "Type": "json-file",
+        "Config": {
+          "max-size": "10m",
+          "max-file": "3"
+        }
+      },
+      "Ulimits": [
+        {
+          "Name": "nofile",
+          "Soft": 1024,
+          "Hard": 1024
+        }
+      ],
+      "Binds": null,
+      "PortBindings": {},
+      "Devices": null
+    },
+    "Mounts": [],
+    "State": {
+      "Status": "running",
+      "Health": {
+        "Status": "healthy"
+      }
+    }
+  }
+]

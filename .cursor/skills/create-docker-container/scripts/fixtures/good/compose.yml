@@ -1,0 +1,47 @@
+# Validator fixture. Not a container template.
+# image: example:latest
+# Never set privileged: true
+
+name: sample
+
+services:
+  sample:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: sample:local
+    container_name: sample
+    init: true
+    read_only: true
+    user: "65532:65532"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    pids_limit: 256
+    mem_limit: 512m
+    cpus: "1.0"
+    ulimits:
+      nofile:
+        soft: 1024
+        hard: 1024
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,nodev,size=64m
+    networks:
+      - sample
+    restart: "on-failure:5"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      test: ["CMD", "/app/healthcheck"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+networks:
+  sample:
+    driver: bridge

@@ -1,0 +1,65 @@
+[
+  {
+    "Config": {
+      "User": "root",
+      "Healthcheck": {
+        "Test": ["NONE"]
+      }
+    },
+    "HostConfig": {
+      "Privileged": true,
+      "ReadonlyRootfs": false,
+      "CapDrop": [],
+      "CapAdd": ["SYS_ADMIN"],
+      "SecurityOpt": ["apparmor=unconfined", "seccomp=unconfined"],
+      "NetworkMode": "host",
+      "PidMode": "host",
+      "IpcMode": "host",
+      "UTSMode": "host",
+      "UsernsMode": "host",
+      "Memory": 0,
+      "NanoCpus": 0,
+      "CpuQuota": 0,
+      "PidsLimit": 0,
+      "Init": false,
+      "RestartPolicy": {
+        "Name": "always",
+        "MaximumRetryCount": 0
+      },
+      "LogConfig": {
+        "Type": "json-file",
+        "Config": {}
+      },
+      "Ulimits": null,
+      "Binds": ["/var/run/docker.sock:/var/run/docker.sock"],
+      "PortBindings": {
+        "80/tcp": [
+          {
+            "HostIp": "0.0.0.0",
+            "HostPort": "80"
+          }
+        ]
+      },
+      "Devices": [
+        {
+          "PathOnHost": "/dev/sda",
+          "PathInContainer": "/dev/sda"
+        }
+      ]
+    },
+    "Mounts": [
+      {
+        "Type": "bind",
+        "Source": "/var/run/docker.sock",
+        "Destination": "/var/run/docker.sock",
+        "Propagation": "shared"
+      }
+    ],
+    "State": {
+      "Status": "exited",
+      "Health": {
+        "Status": "unhealthy"
+      }
+    }
+  }
+]
