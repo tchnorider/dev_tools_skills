@@ -3,26 +3,6 @@
   <img src="assets/readme-title.png" alt="Secure Docker container skill" height="40" align="absmiddle">
 </h1>
 
-```text
-         ## ## ## ##      ===
-     /""""""""""""""""\___/ ===
-~~~ {~~ ~~~~ ~~~ ~~~~ ~~ ~ /  ===-- ~~~
-     \______ o          __/
-       \    \        __/
-        \____\______/
-              |
-              o
-              |
-              o
-             / \
-            |   |
-            |___|
-           /     \
-          /_______\
-```
-
-Classic Docker whale ASCII ([dhrp gist](https://gist.github.com/dhrp/5733652)); anchor and chain added below the mark.
-
 This project is a Cursor Agent Skill. When a prompt includes `creates a new docker container named x`, the agent creates that container: `x` is the name in the prompt. It asks for the workload, network exposure, outbound access, storage, and configuration keys before it writes anything. It then pins the newest patched base image by digest and applies current container hardening practice.
 
 You can also invoke it with `/create-docker-container`.
