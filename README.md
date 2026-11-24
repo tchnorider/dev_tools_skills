@@ -1,6 +1,6 @@
 <h1>
   <img src="assets/docker-logo.png" alt="Docker logo" width="76" align="absmiddle">
-  <span style="font-weight:700;background:linear-gradient(135deg,#f0f7ff 0%,#b8d4f0 12%,#6ba3d6 28%,#318ce7 44%,#0055a4 58%,#003e7e 76%,#002654 100%);-webkit-background-clip:text;background-clip:text;color:transparent">Secure Docker container skill</span>
+  <img src="assets/readme-title.png" alt="Secure Docker container skill" height="40" align="absmiddle">
 </h1>
 
 This project is a Cursor Agent Skill. When a prompt includes `creates a new docker container named x`, the agent creates that container: `x` is the name in the prompt. It asks for the workload, network exposure, outbound access, storage, and configuration keys before it writes anything. It then pins the newest patched base image by digest and applies current container hardening practice.
