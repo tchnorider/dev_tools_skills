@@ -1,4 +1,4 @@
-# Secure Docker container skill
+<h1><img src="assets/docker-logo.png" alt="Docker logo" width="76" align="absmiddle"> Secure Docker container skill</h1>
 
 This project is a Cursor Agent Skill. When a prompt includes `creates a new docker container named x`, the agent creates that container: `x` is the name in the prompt. It asks for the workload, network exposure, outbound access, storage, and configuration keys before it writes anything. It then pins the newest patched base image by digest and applies current container hardening practice.
 
