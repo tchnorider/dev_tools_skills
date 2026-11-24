@@ -29,7 +29,7 @@ Docker Engine with Compose v2 and BuildKit, on the machine where the container i
 
 Secret values stay in a gitignored `.env`. The chat is asked for key names only.
 
-## Check the skill
+<h2><img src="assets/heading-check-the-skill.png" alt="Check the skill" height="32"></h2>
 
 The validator tests do not need a running Docker daemon:
 
