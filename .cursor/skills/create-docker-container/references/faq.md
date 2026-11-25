@@ -175,6 +175,18 @@ Install one of these when the script reports `SCANNER=none`:
 - [Grype](https://github.com/anchore/grype)
 - Docker Scout (`docker scout`)
 
+## Verification results
+
+Post-creation checks from the skill:
+
+__TEST_RESULTS_TABLE__
+
+Re-run the full suite:
+
+```bash
+bash __POST_CREATION_TEST_SCRIPT__ --project __PROJECT_DIR__ --image __SERVICE_IMAGE____STARTED_TEST_FLAG__
+```
+
 ## How do I confirm it is still hardened?
 
 ```bash

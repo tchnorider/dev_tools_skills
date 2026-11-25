@@ -3,7 +3,7 @@ name: create-docker-container
 description: 'Create a hardened Docker container and its Compose project. Use this skill whenever the prompt includes "creates a new docker container named x", where x is the container name. Also use it when the user asks to create a new Docker container, scaffold a secure container, or harden a new container configuration. Ask for every input the container needs, target the current Docker Engine stable release and the current CIS Docker Benchmark, pin the newest patched base image by digest, apply container security best practices, and finish with a how-to-use FAQ.'
 compatibility: "Requires Docker Engine with Compose v2 and BuildKit on the machine where the container is created. Re-check the current stable Engine and the current CIS Docker Benchmark at creation time."
 metadata:
-  version: "1.2.0"
+  version: "1.3.0"
 icon: shield
 color: green
 ---
@@ -27,6 +27,7 @@ Read these references before choosing an image or writing a Dockerfile:
 - [references/security-baseline.md](references/security-baseline.md)
 - [references/supply-chain-security.md](references/supply-chain-security.md)
 - [references/host-daemon-security.md](references/host-daemon-security.md)
+- [references/post-creation-tests.md](references/post-creation-tests.md)
 
 The version file is a snapshot. Look up the current Docker Engine stable release and the current CIS Docker Benchmark, and trust the lookup when it is newer than the snapshot.
 
@@ -197,11 +198,29 @@ Paste the host and daemon checklist from [references/host-daemon-security.md](re
 
 If they chose not to start it, the static validator is the gate. Say that the running container has not been checked yet, and put the start command in the FAQ.
 
+## 7b. Run post-creation tests
+
+After validation, build, scan, and optional start succeed, run the verification suite from [references/post-creation-tests.md](references/post-creation-tests.md):
+
+```bash
+bash <skill>/scripts/run-container-tests.sh \
+  --project containers/<container-name> \
+  --image <service>:local \
+  [--started] \
+  [<validator flags from the interview>]
+```
+
+Use `--started` when the container was started. Pass `--skip-host-versions` only in the skill's own automated tests, not for a real container delivery.
+
+If the script exits **1**, fix the failing rows and run it again. Do not finish while any row is `FAIL`. Treat `WAIT` like a failure for delivery: wait for the healthcheck, then re-run up to three times.
+
+Copy the script's markdown table into `HOWTO.md` at `__TEST_RESULTS_TABLE__`. In the chat reply, after the FAQ, state pass or fail in one sentence and include the **same table**. Every `If this fails` cell must stay in the reply so the user knows the next step.
+
 ## 8. List the how-to FAQ
 
-Write `containers/<container-name>/HOWTO.md` from [references/faq.md](references/faq.md). Replace every `__TOKEN__` with the real value. Keep a `<!-- IF ... -->` block only when that condition is true, and delete the marker comments. Do not leave a `__TOKEN__` or a marker comment in the file.
+Write `containers/<container-name>/HOWTO.md` from [references/faq.md](references/faq.md). Replace every `__TOKEN__` with the real value. Set `__STARTED_TEST_FLAG__` to ` --started` when the container was started, or leave it empty when not. Keep a `<!-- IF ... -->` block only when that condition is true, and delete the marker comments. Do not leave a `__TOKEN__` or a marker comment in the file.
 
-The final reply leads with the FAQ. Start with one sentence naming the container and the pinned image, then the FAQ itself, including the hardening checks. Do not end the turn without that FAQ.
+The final reply leads with the FAQ. Start with one sentence naming the container and the pinned image, then the FAQ itself, including the verification results table. Do not end the turn without that FAQ and the test table when creation reached step 7b.
 
 ## Refusals
 

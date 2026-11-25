@@ -87,4 +87,11 @@ bash .cursor/skills/create-docker-container/scripts/validate-container.sh \
   --project containers/<name> --static-only
 ```
 
+After the agent creates and hardens a container, it runs **post-creation tests** and prints a concise results table (pass/fail plus what to do on failure):
+
+```bash
+bash .cursor/skills/create-docker-container/scripts/run-container-tests.sh \
+  --project containers/<name> --image <service>:local --started
+```
+
 Full skill entry point: [SKILL.md](.cursor/skills/create-docker-container/SKILL.md).
