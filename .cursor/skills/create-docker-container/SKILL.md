@@ -3,7 +3,7 @@ name: create-docker-container
 description: 'Create a hardened Docker container and its Compose project. Use this skill whenever the prompt includes "creates a new docker container named x", where x is the container name. Also use it when the user asks to create a new Docker container, scaffold a secure container, or harden a new container configuration. Ask for every input the container needs, target the current Docker Engine stable release and the current CIS Docker Benchmark, pin the newest patched base image by digest, apply container security best practices, and finish with a how-to-use FAQ.'
 compatibility: "Requires Docker Engine with Compose v2 and BuildKit on the machine where the container is created. Re-check the current stable Engine and the current CIS Docker Benchmark at creation time."
 metadata:
-  version: "1.1.0"
+  version: "1.2.0"
 icon: shield
 color: green
 ---
@@ -42,14 +42,24 @@ If a container or Compose project already uses that name, ask whether to replace
 
 ## 3. Check Docker
 
-Run `docker version`, `docker compose version`, and `docker info`.
+Run `docker compose version` and `docker info`. Run the minimum security version check:
+
+```bash
+bash <skill>/scripts/check-docker-versions.sh
+```
+
+The script requires **Docker Engine ≥ 29.9.1** and **bundled containerd ≥ 2.4.2** on the daemon. Earlier releases have known security vulnerabilities. Constants live in [references/versions.md](references/versions.md).
 
 - If the Docker client is missing, stop. Point the user at the current stable Engine install documentation (`https://docs.docker.com/engine/install/`). Do not fake a container.
 - If the client exists and the daemon is down, say so. You may write the project files after the interview, and you must not claim the container is running.
-- Compare the installed Engine with the current stable release from the lookup in step 1. If the installed Engine is older, ask whether to continue on the installed Engine. Wait for the answer. Do not use features that Engine does not support, and do not use deprecated ones.
+- When the check exits **1** (`WARN` / `FAIL`), stop the workflow. Explain which component is below the minimum. Use AskQuestion (or ask in the reply and wait) with these options:
+  - **Upgrade Engine and containerd now**, then re-run the check. Only after the user confirms, follow [references/engine-upgrade.md](references/engine-upgrade.md) for their OS (package upgrade or Docker's official install steps). Do not run destructive host commands without confirmation. After upgrade, run `check-docker-versions.sh` again; do not create the container until it passes or the user explicitly chooses to continue without upgrading.
+  - **Continue without upgrading** — accept the security risk and proceed with the interview.
+  - **Stop** — end the skill until the host is patched.
+- Compare the installed Engine with the current stable release from the lookup in step 1 as well. If it is older than current stable but still ≥ 29.9.1, mention that in the FAQ; only ask to continue when it is below **29.9.1** unless the user already chose to continue without upgrading.
 - Do not set `DOCKER_CONTENT_TRUST`. Content trust was retired. Pin images by digest instead.
 
-Record the installed Engine version, the current stable version, the Compose version, and the CIS benchmark version you actually looked up. Those values go in the FAQ.
+Record the installed Engine and containerd versions, the minimum security floor (29.9.1 / 2.4.2), the current stable Engine from lookup, the Compose version, and the CIS benchmark version you actually looked up. Those values go in the FAQ.
 
 ## 4. Ask for the inputs
 
@@ -88,7 +98,8 @@ Ask a second round only for facts the first answers made necessary, then wait ag
 - Existing application: inspect the workspace first and confirm what you found. If there is no application, say so and ask which other workload they want.
 - Published port: container port and host port, after you know the image. Default both to the image port when it is 1024 or higher.
 - Volume or bind mount: container path, and the host path for a bind mount. Default the mount to read-only. Ask before making it writable.
-- Installed Engine is older than current stable: continue or stop.
+- Engine or containerd below 29.9.1 / 2.4.2: upgrade now, continue without upgrading, or stop.
+- Installed Engine is older than current stable but meets the security floor: note in FAQ only unless the user cares.
 - Name collision: replace or choose another name.
 - The image can only start as root: accept that exception or pick another image. See the baseline.
 

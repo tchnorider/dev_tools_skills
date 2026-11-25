@@ -5,6 +5,7 @@ set -euo pipefail
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 VALIDATOR="$ROOT/scripts/validate-container.sh"
 RESOLVE="$ROOT/scripts/resolve-image-digest.sh"
+DOCKER_VERSION_CHECK="$ROOT/scripts/check-docker-versions.sh"
 GOOD="$ROOT/scripts/fixtures/good"
 RUNTIME_GOOD="$ROOT/scripts/fixtures/runtime-good.json"
 RUNTIME_BAD="$ROOT/scripts/fixtures/runtime-bad.json"
@@ -232,5 +233,17 @@ done
 runtime_starting=$(expect_rc 2 bash "$VALIDATOR" --project "$GOOD" --inspect-json "$RUNTIME_STARTING")
 require_line "$runtime_starting" "^WAIT  runtime/health  "
 reject_line "$runtime_starting" "^FAIL  "
+
+DOCKER_OK="$ROOT/scripts/fixtures/docker-version-ok.json"
+DOCKER_OLD="$ROOT/scripts/fixtures/docker-version-old.json"
+
+version_ok=$(expect_rc 0 env CHECK_DOCKER_VERSION_JSON_FILE="$DOCKER_OK" bash "$DOCKER_VERSION_CHECK")
+require_line "$version_ok" "^PASS  engine-version  "
+require_line "$version_ok" "^PASS  containerd-version  "
+
+version_old=$(expect_rc 1 env CHECK_DOCKER_VERSION_JSON_FILE="$DOCKER_OLD" bash "$DOCKER_VERSION_CHECK")
+require_line "$version_old" "^WARN  docker-versions  "
+require_line "$version_old" "^FAIL  engine-version  "
+require_line "$version_old" "^FAIL  containerd-version  "
 
 echo "validator checks passed"

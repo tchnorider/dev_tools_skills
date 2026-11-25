@@ -21,9 +21,10 @@ This skill does not change the host or the daemon. Copy the checklist into each 
 
 ## Keep Engine and runc updated
 
+- Do not run hardened workloads on Engine **below 29.9.1** or bundled containerd **below 2.4.2**; earlier releases have known security vulnerabilities.
 - Track the current stable Docker Engine release and patch the host promptly.
 - Update `containerd` and `runc` with Engine releases to pick up container escape fixes.
-- Record the Engine version from `docker version` in `HOWTO.md` and remind the operator when it lags the current stable release.
+- Record Engine and containerd versions from `docker version` in `HOWTO.md`. Remind the operator when they lag the security floor or the current stable release.
 
 ## Default seccomp and MAC
 

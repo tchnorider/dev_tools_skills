@@ -59,11 +59,17 @@ The skill does **not** edit the host or `daemon.json`. Each project’s `HOWTO.m
 - **Protect the Docker socket** — Limit membership in the `docker` group; never expose unauthenticated TCP on port 2375; use TLS on 2376 for remote API access.
 - **Enable user namespace remapping** — Set `userns-remap` in `/etc/docker/daemon.json` when policy allows, or run rootless Docker.
 - **Configure logging and auditing** — Daemon log rotation (`max-size`, `max-file`); audit critical paths such as `/etc/docker` and `/var/lib/docker`; forward container logs when production policy requires it.
-- **Keep Engine and runc updated** — Patch Docker Engine, containerd, and runc promptly for container escape fixes. The FAQ records the installed Engine version and compares it to the current stable release.
+- **Keep Engine and runc updated** — Require Engine **≥ 29.9.1** and containerd **≥ 2.4.2** before creating containers; patch promptly for container escape fixes. Upgrade steps: [engine-upgrade.md](.cursor/skills/create-docker-container/references/engine-upgrade.md).
 
 ## Requirements
 
 Docker Engine with Compose v2 and BuildKit, on the machine where the container is created. The agent stops if Docker is missing.
+
+**Security floor:** Engine **≥ 29.9.1** and bundled containerd **≥ 2.4.2** (checked with `check-docker-versions.sh`). Older versions trigger a warning and the agent asks whether to upgrade the host, continue at your own risk, or stop.
+
+```bash
+bash .cursor/skills/create-docker-container/scripts/check-docker-versions.sh
+```
 
 Secret values stay in a gitignored `.env`. The chat is asked for key names only.
 

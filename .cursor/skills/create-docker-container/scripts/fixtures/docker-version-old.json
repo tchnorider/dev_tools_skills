@@ -1,0 +1,11 @@
+{
+  "Client": { "Version": "29.8.0" },
+  "Server": {
+    "Version": "29.8.0",
+    "Components": [
+      { "Name": "Engine", "Version": "29.8.0" },
+      { "Name": "containerd", "Version": "2.4.1" },
+      { "Name": "runc", "Version": "1.2.0" }
+    ]
+  }
+}

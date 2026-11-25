@@ -4,7 +4,7 @@ Fill this in after the container is created. Replace every `__TOKEN__`. Keep a b
 
 __CONTAINER_NAME__ runs __IMAGE_TAG__ pinned to `__IMAGE_REF__`. The process runs as `__RUN_USER__`. The project files are in `__PROJECT_DIR__`.
 
-Resolved on __RESOLVED_ON__. Installed Docker Engine __ENGINE_INSTALLED__. Current stable Engine __ENGINE_STABLE__. Compose __COMPOSE_VERSION__. Image and runtime controls were checked against CIS Docker Benchmark __CIS_BENCHMARK__. This did not change the Docker host or the daemon.
+Resolved on __RESOLVED_ON__. Installed Docker Engine __ENGINE_INSTALLED__ (minimum security floor __ENGINE_MIN_VERSION__). Bundled containerd __CONTAINERD_INSTALLED__ (minimum __CONTAINERD_MIN_VERSION__). Current stable Engine __ENGINE_STABLE__. Compose __COMPOSE_VERSION__. Image and runtime controls were checked against CIS Docker Benchmark __CIS_BENCHMARK__. __VERSION_SECURITY_NOTE__ This did not change the Docker host or the daemon unless you chose to upgrade during creation.
 
 <!-- IF EXCEPTIONS -->
 Accepted exceptions: __EXCEPTIONS__
