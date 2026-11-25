@@ -1,5 +1,5 @@
 <h1>
-  <img src="assets/dev-tools-skills-logo.png" alt="Dev Tools Skills" height="80" align="absmiddle">
+  <img src="assets/dev-tools-skills-logo.png?v=2" alt="Dev Tools Skills" height="80" align="absmiddle">
   <img src="assets/readme-title.png" alt="Secure Docker container skill" height="40" align="absmiddle">
 </h1>
 
