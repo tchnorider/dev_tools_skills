@@ -1,5 +1,5 @@
 <h1>
-  <img src="assets/docker-logo.png" alt="Docker logo" width="76" align="absmiddle">
+  <img src="assets/docker-logo.png" alt="Dev Tools Skills logo" width="88" align="absmiddle">
   <img src="assets/readme-title.png" alt="Secure Docker container skill" height="40" align="absmiddle">
 </h1>
 
