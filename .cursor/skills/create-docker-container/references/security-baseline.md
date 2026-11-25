@@ -2,7 +2,15 @@
 
 Apply every control below. The validator id is what `scripts/validate-container.sh` prints. When a check fails, fix it as this table says and run the validator again.
 
-Host and daemon controls (user namespaces, rootless mode, daemon TLS, log defaults) are out of scope. Mention them in the FAQ and do not change them.
+Controls are grouped by where they apply:
+
+| Phase | What it covers |
+| --- | --- |
+| **Image build and supply chain** | Dockerfile, build args, layers, digests, multi-stage layout, secrets in images |
+| **Container runtime** | Compose and `docker inspect` after start |
+| **Host and daemon** | Out of scope for file changes; checklist in [host-daemon-security.md](host-daemon-security.md) and the FAQ |
+
+## Image build and supply chain
 
 | Id | Control | Required fix |
 | --- | --- | --- |
@@ -10,10 +18,22 @@ Host and daemon controls (user namespaces, rootless mode, daemon TLS, log defaul
 | `from-digest` | Pin every base image by digest. | `FROM repository@sha256:<64 hex>` on every stage except `scratch`. |
 | `from-tag-comment` | Keep the human-readable tag next to the pin. | The comment immediately above each pinned `FROM` names the tag, including a dotted version such as `1.2.3`. |
 | `from-no-latest` | Do not use a floating tag. | No `latest`. Choose the newest patched version tag, then pin its digest. |
+| `minimal-runtime` | Prefer minimal final bases. | Final `FROM` is slim, Alpine, distroless, Docker Hardened, or an equivalent minimal runtime—not a full Ubuntu or Debian image. |
+| `multistage-when-compile` | Multi-stage when building artifacts. | When the Dockerfile compiles or bundles with npm, cargo, go, make, mvn, gradle, or similar, use at least two stages and copy only outputs into the final stage. |
+| `no-secret-env` | No secrets in ENV or ARG. | Remove `ENV`/`ARG` that assign passwords, tokens, or keys. Use BuildKit `RUN --mount=type=secret` at build time and runtime injection otherwise. |
+| `no-copy-secrets` | No secret files in layers. | Do not `COPY` `.env`, keys, PEM files, or credential paths into the image. |
+| `no-dev-tooling-final` | No compilers in the final stage. | Install `build-essential`, `build-base`, or equivalent only in a builder stage, not after the last `FROM`. |
 | `user-nonroot` | Run as a non-root user. | `USER` in the Dockerfile and `user:` in Compose. Use the image's non-root user, or create `65532:65532`. |
 | `no-add` | Do not use `ADD`. | Use `COPY`. |
 | `no-dist-upgrade` | Do not upgrade the whole distro inside the image. | Delete `apt-get upgrade`, `apk upgrade`, and the equivalent. Pin the packages you install. |
 | `no-ssh` | Do not install or run SSH in the container. | Remove OpenSSH and `sshd`. |
+
+Continuous vulnerability scanning is not a static file check. After build, run `scripts/scan-image.sh <image-ref>` and record results in `HOWTO.md`. For CI, use [assets/ci-container-scan.yml](../assets/ci-container-scan.yml).
+
+## Container runtime (Compose and live inspect)
+
+| Id | Control | Required fix |
+| --- | --- | --- |
 | `healthcheck` | Check the real process. | A `HEALTHCHECK` or Compose `healthcheck` that fails when the service is down. Never `exit 0`. |
 | `read-only` | Read-only root filesystem. | `read_only: true`, plus explicit writable mounts. |
 | `no-new-privileges` | Block privilege escalation. | `security_opt: ["no-new-privileges:true"]`. |
@@ -24,7 +44,7 @@ Host and daemon controls (user namespaces, rootless mode, daemon TLS, log defaul
 | `no-docker-sock` | Do not mount the Docker socket. | Remove any `docker.sock` mount. |
 | `no-sensitive-mounts` | Do not mount sensitive host directories. | No bind of `/`, `/etc`, `/proc`, `/sys`, `/boot`, `/dev`, `/usr`, `/lib`, `/lib64`, or `/var/lib/docker`. |
 | `no-shared-propagation` | Do not use shared mount propagation. | Remove shared propagation. |
-| `no-unconfined` | Keep the default syscall and MAC profiles. | No `seccomp=unconfined`, `apparmor=unconfined`, or `label:disable`. |
+| `no-unconfined` | Keep the default syscall and MAC profiles. | No `seccomp=unconfined`, `apparmor=unconfined`, or `label:disable`. Rely on the host's default seccomp and AppArmor or SELinux. |
 | `memory-limit` | Bound memory. | `mem_limit`, default `512m`, higher only when the user asked. |
 | `cpu-limit` | Bound CPU. | `cpus`, default `1.0`. |
 | `pids-limit` | Bound process count. | `pids_limit`, default `256`. |
@@ -54,9 +74,7 @@ Any other request that conflicts with this table is refused.
 
 ## Build rules the validator does not fully parse
 
-- Do not copy secrets into a layer. Use a gitignored `.env` at runtime, or a BuildKit secret mount that is not left in the image.
 - Do not run `apt-get update` in its own `RUN`. Install only the packages the final process needs, pinned to versions.
 - Remove setuid and setgid binaries you do not need.
-- Prefer a distroless, Docker Hardened, or other minimal final stage over a general-purpose distribution.
 - Add OCI labels you can fill truthfully (`org.opencontainers.image.title`, `description`, `version`). Do not invent a source URL or a license.
 - The image's own `USER` and Compose `user` should be the same non-root identity.

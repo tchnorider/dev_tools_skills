@@ -149,7 +149,31 @@ Look up the newest patched tag again. Do not move to `:latest`. Pin the new dige
 bash __RESOLVE_SCRIPT__ <repository>:<tag>
 ```
 
-Put the printed reference in every `FROM`, rebuild, and run the validator. If a scanner is installed, scan the new image and read the critical and high results before you keep it.
+Put the printed reference in every `FROM`, rebuild, and run the validator. Scan the new image before you keep it:
+
+```bash
+bash __SCAN_SCRIPT__ __SERVICE_IMAGE__
+```
+
+Record the scanner output in this FAQ section.
+
+## How do I scan for vulnerabilities?
+
+After each build:
+
+```bash
+bash __SCAN_SCRIPT__ __SERVICE_IMAGE__
+```
+
+__SCAN_SUMMARY__
+
+If CI should fail on critical or high CVEs, add a workflow from the skill's `assets/ci-container-scan.yml` and adjust paths for this project.
+
+Install one of these when the script reports `SCANNER=none`:
+
+- [Trivy](https://aquasecurity.github.io/trivy/)
+- [Grype](https://github.com/anchore/grype)
+- Docker Scout (`docker scout`)
 
 ## How do I confirm it is still hardened?
 
@@ -182,4 +206,8 @@ That command does not delete `__VOLUME_SOURCE__`. Add `--volumes` only when you 
 
 ## What does this not protect?
 
-The container's own configuration was hardened. The Docker host and daemon were not. Review the current CIS Docker Benchmark host and daemon controls separately: who can talk to the Docker socket, whether the daemon runs rootless or with user namespaces, and how the host is patched. A container shares the host kernel, so a kernel vulnerability is outside what this FAQ changes.
+The container project was hardened. The Docker host and daemon were not changed by this skill. Close these gaps on the machine that runs Engine:
+
+__HOST_DAEMON_CHECKLIST__
+
+A container shares the host kernel. Kernel vulnerabilities and misconfigured daemons are outside what the container files enforce. Review the current CIS Docker Benchmark host and daemon section when you promote this workload to production.

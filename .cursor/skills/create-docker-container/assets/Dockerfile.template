@@ -5,10 +5,20 @@
 # Human tag: __IMAGE_TAG__
 # Resolved on: __RESOLVED_ON__
 
+# Optional builder when you compile or bundle. Delete this stage for static workloads.
+# Human tag (builder): __BUILDER_IMAGE_TAG__
+# FROM __BUILDER_IMAGE_REPOSITORY__@sha256:__BUILDER_IMAGE_DIGEST__ AS builder
+# WORKDIR /src
+# COPY . .
+# RUN npm ci && npm run build
+# Build-time secret example (never ENV the value):
+# RUN --mount=type=secret,id=__SECRET_ID__ npm run build
+
+# Human tag (runtime): __IMAGE_TAG__
 FROM __IMAGE_REPOSITORY__@sha256:__IMAGE_DIGEST__ AS runtime
 
 # Create a non-root user only when the base image does not already have one.
-# Debian/Ubuntu:
+# Debian/Ubuntu slim:
 #   RUN groupadd --system --gid 65532 app \
 #     && useradd --system --uid 65532 --gid 65532 --no-create-home --shell /usr/sbin/nologin app
 # Alpine:
@@ -16,7 +26,7 @@ FROM __IMAGE_REPOSITORY__@sha256:__IMAGE_DIGEST__ AS runtime
 # Then: USER 65532:65532
 USER __RUN_USER__
 
-# COPY --chown=__RUN_USER__ app /app
+# COPY --from=builder --chown=__RUN_USER__ /src/dist /app
 WORKDIR /app
 
 # Observe the real process. Do not use exit 0, and do not install curl for this.

@@ -82,7 +82,9 @@ expect_rc 2 bash "$RESOLVE" nginx:1.2.3-dev >/dev/null
 static=$(expect_rc 0 bash "$VALIDATOR" --project "$GOOD" --static-only)
 for id in \
   dockerfile-syntax from-digest from-tag-comment from-no-latest user-nonroot \
-  no-add no-dist-upgrade no-ssh healthcheck read-only no-new-privileges \
+  no-add no-dist-upgrade no-ssh no-secret-env no-copy-secrets \
+  multistage-when-compile minimal-runtime no-dev-tooling-final \
+  healthcheck read-only no-new-privileges \
   cap-drop-all no-cap-add no-privileged no-host-namespaces no-docker-sock \
   no-sensitive-mounts no-shared-propagation no-unconfined memory-limit \
   cpu-limit pids-limit nofile-limit tmpfs-tmp user-defined-network egress \
@@ -195,6 +197,27 @@ mutate readonly
 sed -i 's/read_only: true/read_only: false/' "$work/readonly/compose.yml"
 readonly_out=$(expect_rc 1 bash "$VALIDATOR" --project "$work/readonly" --static-only)
 require_line "$readonly_out" "^FAIL  read-only  "
+
+mutate secrets
+printf '\nENV API_KEY=supersecret\n' >> "$work/secrets/Dockerfile"
+secrets_out=$(expect_rc 1 bash "$VALIDATOR" --project "$work/secrets" --static-only)
+require_line "$secrets_out" "^FAIL  no-secret-env  "
+
+mutate fatbase
+{
+  head -n 3 "$work/fatbase/Dockerfile"
+  echo '# ubuntu:24.04'
+  echo 'FROM ubuntu:24.04@sha256:9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08'
+  tail -n +5 "$work/fatbase/Dockerfile"
+} >"$work/fatbase/Dockerfile.new"
+mv "$work/fatbase/Dockerfile.new" "$work/fatbase/Dockerfile"
+fatbase_out=$(expect_rc 1 bash "$VALIDATOR" --project "$work/fatbase" --static-only)
+require_line "$fatbase_out" "^FAIL  minimal-runtime  "
+
+mutate onestage
+printf '\nRUN npm ci && npm run build\n' >> "$work/onestage/Dockerfile"
+onestage_out=$(expect_rc 1 bash "$VALIDATOR" --project "$work/onestage" --static-only)
+require_line "$onestage_out" "^FAIL  multistage-when-compile  "
 
 runtime_good=$(expect_rc 0 bash "$VALIDATOR" --project "$GOOD" --inspect-json "$RUNTIME_GOOD")
 require_line "$runtime_good" "^PASS  runtime/read-only  "

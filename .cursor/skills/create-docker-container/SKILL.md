@@ -3,7 +3,7 @@ name: create-docker-container
 description: 'Create a hardened Docker container and its Compose project. Use this skill whenever the prompt includes "creates a new docker container named x", where x is the container name. Also use it when the user asks to create a new Docker container, scaffold a secure container, or harden a new container configuration. Ask for every input the container needs, target the current Docker Engine stable release and the current CIS Docker Benchmark, pin the newest patched base image by digest, apply container security best practices, and finish with a how-to-use FAQ.'
 compatibility: "Requires Docker Engine with Compose v2 and BuildKit on the machine where the container is created. Re-check the current stable Engine and the current CIS Docker Benchmark at creation time."
 metadata:
-  version: "1.0.0"
+  version: "1.1.0"
 icon: shield
 color: green
 ---
@@ -21,7 +21,14 @@ Examples:
 
 ## 1. Read the baseline
 
-Read [references/versions.md](references/versions.md) and [references/security-baseline.md](references/security-baseline.md) before choosing an image or writing a Dockerfile. The version file is a snapshot. Look up the current Docker Engine stable release and the current CIS Docker Benchmark, and trust the lookup when it is newer than the snapshot.
+Read these references before choosing an image or writing a Dockerfile:
+
+- [references/versions.md](references/versions.md)
+- [references/security-baseline.md](references/security-baseline.md)
+- [references/supply-chain-security.md](references/supply-chain-security.md)
+- [references/host-daemon-security.md](references/host-daemon-security.md)
+
+The version file is a snapshot. Look up the current Docker Engine stable release and the current CIS Docker Benchmark, and trust the lookup when it is newer than the snapshot.
 
 ## 2. Take the name from the prompt
 
@@ -132,7 +139,9 @@ Write these files in `containers/<container-name>/`:
 - `.env.example` when the user named configuration keys, and a gitignored `.env` copied from it with empty values
 - `HOWTO.md`, written in the last step
 
-Use a multi-stage build when it keeps build tools out of the final image. Pair `apt-get update` with `apt-get install` in the same `RUN`. Pin native packages. Use `COPY`, not `ADD`. Do not install OpenSSH, a shell, or curl just to make debugging or the healthcheck easier. The healthcheck must observe the real process, not `exit 0`.
+Use a multi-stage build whenever the workload compiles code or runs `npm`/`yarn`/`pnpm` build steps. The final stage must be a slim, Alpine, or distroless-style base; keep full OS images in builder stages only. Pair `apt-get update` with `apt-get install` in the same `RUN`. Pin native packages. Use `COPY`, not `ADD`. Do not install OpenSSH, a shell, or curl just to make debugging or the healthcheck easier. The healthcheck must observe the real process, not `exit 0`.
+
+For build-time secrets, use BuildKit `RUN --mount=type=secret,id=...` and wire secrets in Compose `build.secrets` when needed. Never assign secret values to `ENV` or `ARG`, and never `COPY` `.env` or key files into a layer.
 
 Compose `image` for the locally built container is `<service>:local`. The pinned upstream image belongs in `FROM`, not in an unpinned `image:` field.
 
@@ -165,7 +174,15 @@ docker compose up -d
 
 Then run the validator without `--static-only`. A pass counts only from that live inspect. Never pass `--inspect-json`. If the output contains `WAIT`, the healthcheck is still starting: wait and run the validator again, at most three times. If it is still `WAIT`, stop and say the healthcheck did not become healthy. Do not describe the container as done while the validator exits non-zero.
 
-If a scanner is installed (`docker scout` or `trivy`), scan the built image and put the critical and high findings in the FAQ. Do not claim it was scanned when it was not, and do not roll back to an older tag to hide findings in the newest patched image.
+After a successful build, run:
+
+```bash
+bash <skill>/scripts/scan-image.sh <service>:local
+```
+
+Record the scanner name, pass or fail, and any critical or high CVEs in the FAQ. If no scanner is installed, state that and list install commands for Trivy, Grype, and Docker Scout. Offer the CI template [assets/ci-container-scan.yml](assets/ci-container-scan.yml) when the user wants pipeline enforcement. Do not roll back to an older tag to hide findings on the newest patched base.
+
+Paste the host and daemon checklist from [references/host-daemon-security.md](references/host-daemon-security.md) into `HOWTO.md` under **What does this not protect?** so operators know how to harden the machine that runs Docker.
 
 If they chose not to start it, the static validator is the gate. Say that the running container has not been checked yet, and put the start command in the FAQ.
 

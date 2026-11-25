@@ -1,0 +1,28 @@
+# Template: copy to .github/workflows/container-scan.yml when the user wants CI scanning.
+# Replace __SERVICE_NAME__ and paths with the real container project.
+
+name: container-scan
+
+on:
+  push:
+    paths:
+      - "containers/__SERVICE_NAME__/**"
+  pull_request:
+    paths:
+      - "containers/__SERVICE_NAME__/**"
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build image
+        run: docker compose -f containers/__SERVICE_NAME__/compose.yml build
+      - name: Scan with Trivy
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: "__SERVICE_NAME__:local"
+          format: table
+          exit-code: "1"
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true

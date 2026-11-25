@@ -243,6 +243,57 @@ if [[ -f "$dockerfile" ]]; then
   else
     pass no-ssh "no SSH in the Dockerfile"
   fi
+
+  if grep -iE '^ENV[[:space:]]+[^=]*(PASSWORD|SECRET|TOKEN|PRIVATE_KEY|API_KEY|BEARER)[^=]*=' "$dockerfile" \
+    || grep -iE '^ARG[[:space:]]+[^=]*(PASSWORD|SECRET|TOKEN|PRIVATE_KEY|API_KEY)=' "$dockerfile"; then
+    fail no-secret-env "never bake secrets in ENV or ARG; use BuildKit --mount=type=secret and runtime mounts"
+  else
+    pass no-secret-env "no obvious secrets in ENV or ARG"
+  fi
+
+  if grep -iE '^COPY[[:space:]].*(\.env|/secrets/|\.pem|\.key|id_rsa|credentials)' "$dockerfile"; then
+    fail no-copy-secrets "do not COPY secret files into image layers; inject at runtime"
+  else
+    pass no-copy-secrets "no obvious secret paths in COPY"
+  fi
+
+  if grep -qiE '(^|[[:space:]])(npm|yarn|pnpm)[[:space:]]+(ci|install|run[[:space:]]+build)|cargo[[:space:]]+build|go[[:space:]]+build|cmake|make[[:space:]]+install|mvn[[:space:]]|gradle[[:space:]]|gcc[[:space:]]|g\+\+[[:space:]]' "$dockerfile"; then
+    from_count="$(grep -cE '^FROM ' "$dockerfile" || true)"
+    has_named_stages="$(grep -cE '^FROM .+ AS ' "$dockerfile" || true)"
+    if [[ "$from_count" -lt 2 && "$has_named_stages" -lt 1 ]]; then
+      fail multistage-when-compile "use multi-stage builds: compile in a builder stage, copy only artifacts to the final image"
+    else
+      pass multistage-when-compile "multi-stage Dockerfile for compile or build steps"
+    fi
+  else
+    pass multistage-when-compile "no compile or package-manager build steps detected (single stage acceptable)"
+  fi
+
+  last_from_line="$(grep -E '^FROM ' "$dockerfile" | tail -1 || true)"
+  if [[ -n "$last_from_line" ]]; then
+  if echo "$last_from_line" | grep -qiE 'distroless|gcr\.io/distroless|dhi\.io|[-/](slim|alpine)\b|alpine:[0-9]'; then
+    pass minimal-runtime "final stage uses a slim, Alpine, or distroless-style base"
+  elif echo "$last_from_line" | grep -qiE 'example\.invalid|scratch\b'; then
+    pass minimal-runtime "base image is a placeholder or scratch; pin a minimal runtime before production"
+  elif echo "$last_from_line" | grep -qiE 'FROM[[:space:]]+(ubuntu|debian)[:@]' \
+    && ! echo "$last_from_line" | grep -qiE 'slim|alpine|distroless'; then
+    fail minimal-runtime "prefer slim, Alpine, or distroless final stages over full OS images"
+  else
+    pass minimal-runtime "final stage base is not a known full distro tag (still prefer slim or distroless when possible)"
+  fi
+  else
+    fail minimal-runtime "Dockerfile has no FROM instruction"
+  fi
+
+  final_stage_line="$(grep -nE '^FROM ' "$dockerfile" | tail -1 | cut -d: -f1)"
+  if [[ -n "$final_stage_line" ]]; then
+    final_tail="$(tail -n +"${final_stage_line}" "$dockerfile")"
+    if echo "$final_tail" | grep -qiE 'apt(-get)?[[:space:]]+install.*(build-essential|gcc|g\+\+|golang-go)|apk[[:space:]]+add.*(build-base|\.build-deps)|dnf[[:space:]]+install.*(gcc|make)|yum[[:space:]]+install.*(gcc|make)'; then
+      fail no-dev-tooling-final "do not install compilers or build toolchains in the final image stage"
+    else
+      pass no-dev-tooling-final "final stage does not install obvious build toolchains"
+    fi
+  fi
 fi
 
 if [[ -n "$stripped" ]]; then
