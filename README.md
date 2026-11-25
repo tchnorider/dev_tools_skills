@@ -72,7 +72,7 @@ bash .cursor/skills/create-docker-container/scripts/check-docker-versions.sh
 
 Secret values stay in a gitignored `.env`. The chat is asked for key names only.
 
-<h2><img src="assets/heading-check-the-skill.png" alt="Check the skill" height="32"></h2>
+## Check the skill
 
 The validator tests do not need a running Docker daemon:
 
